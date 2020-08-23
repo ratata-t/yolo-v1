@@ -15,3 +15,4 @@ if __name__ == '__main__':
     image, (name, bbox) = voc_train[0]
     image = image / 255.0
     pred = model(image.unsqueeze(0))
+    print(pred.shape)

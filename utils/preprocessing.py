@@ -2,6 +2,7 @@ import torchvision.transforms as transforms
 from PIL import Image
 import skimage.draw
 import numpy as np
+import torch 
 
 import config
 
@@ -35,4 +36,4 @@ def draw_image_with_bboxes(image, names, bboxes):
 
 def prepare_data(image, annotation):
     image, names, bboxes = voc_to_yolo(image, annotation)
-    return transforms.PILToTensor()(image), (names, bboxes)
+    return torch.as_tensor(np.array(image)).permute(2, 0, 1)/255., (names, bboxes)
