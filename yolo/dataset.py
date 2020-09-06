@@ -5,7 +5,7 @@ from utils.preprocessing import voc_to_yolo
 
 
 def load_dataset():
-	voc_train = torchvision.datasets.VOCDetection(
+    voc_train = torchvision.datasets.VOCDetection(
         "voc2012",
         image_set="train",
         download=False,

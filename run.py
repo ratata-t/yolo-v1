@@ -1,15 +1,24 @@
 import torchvision
+import torch
 
 from yolo.model import Yolo
+from yolo.loss import yolo_loss
 from utils.preprocessing import prepare_data
 
 
 if __name__ == "__main__":
     model = Yolo()
-    voc_train = torchvision.datasets.VOCDetection(
+    voc_train_tensor = torchvision.datasets.VOCDetection(
         "data/voc2012", image_set="train", download=False, transforms=prepare_data
     )
-    image, (name, bbox) = voc_train[0]
-    image = image / 255.0
-    pred = model(image.unsqueeze(0))
-    print(pred.shape)
+    dataloader = torch.utils.data.DataLoader(voc_train_tensor)
+    elem = next(iter(dataloader))
+    image, (name, bbox) = elem
+    pred = model(image)
+    yolo_loss(pred, name, bbox)
+
+    # image, (name, bbox) = voc_train[0]
+    # image = image / 255.0
+    # pred = model(image.unsqueeze(0))
+    # print(pred.shape)
+    
