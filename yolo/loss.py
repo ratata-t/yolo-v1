@@ -1,20 +1,17 @@
-def IoU(bbox1, bbox2):
-    x_min1, x_max1, y_min1, y_max1 = bbox1
-    x_min2, x_max2, y_min2, y_max2 = bbox2
-    x_min = max(x_min1, x_min2)
-    y_min = max(y_min1, y_min2)
-    x_max = min(x_max1, x_max2)
-    y_max = min(y_max1, y_max2)
+from utils.data import Bbox
 
-    x = max(0, x_max - x_min)
-    y = max(0, y_max - y_min)
+
+def IoU(bbox1: Bbox, bbox2: Bbox):
+    xmin = max(bbox1.xmin, bbox2.xmin)
+    ymin = max(bbox1.ymin, bbox2.ymin)
+    xmax = min(bbox1.xmax, bbox2.xmax)
+    ymax = min(bbox1.ymax, bbox2.ymax)
+
+    x = max(0, xmax - xmin)
+    y = max(0, ymax - ymin)
     intersection = x * y
 
-    union = (
-        (x_max1 - x_min1) * (y_max1 - y_min1)
-        + (x_max2 - x_min2) * (y_max2 - y_min2)
-        - intersection
-    )
+    union = bbox1.area + bbox2.area - intersection
     return intersection / union
 
 
