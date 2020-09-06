@@ -4,10 +4,10 @@ import torch.nn as nn
 import numpy as np
 
 import config
-from utils.data import get_obj_names
+from utils.data import Bbox
 
 
-OBJ_NAMS = [
+OBJ_NAMES = [
      'aeroplane',
      'bicycle',
      'bird',
@@ -31,71 +31,18 @@ OBJ_NAMS = [
 ]
 
 
-def IoU(bbox1, bbox2):
-    x_min1, x_max1, y_min1, y_max1 = bbox1
-    x_min2, x_max2, y_min2, y_max2 = bbox2
-    x_min = max(x_min1, x_min2)
-    y_min = max(y_min1, y_min2)
-    x_max = min(x_max1, x_max2)
-    y_max = min(y_max1, y_max2)
+def IoU(bbox1: Bbox, bbox2: Bbox):
+    xmin = max(bbox1.xmin, bbox2.xmin)
+    ymin = max(bbox1.ymin, bbox2.ymin)
+    xmax = min(bbox1.xmax, bbox2.xmax)
+    ymax = min(bbox1.ymax, bbox2.ymax)
 
-    x = max(0, x_max - x_min)
-    y = max(0, y_max - y_min)
+    x = max(0, xmax - xmin)
+    y = max(0, ymax - ymin)
     intersection = x * y
 
-    union = (
-        (x_max1 - x_min1) * (y_max1 - y_min1)
-        + (x_max2 - x_min2) * (y_max2 - y_min2)
-        - intersection
-    )
+    union = bbox1.area + bbox2.area - intersection
     return intersection / union
-
-
-class Bbox:
-    s_width = config.WIDTH / config.S
-    s_height = config.HEIGHT / config.S
-
-    def __init__(self, xmin, xmax, ymin, ymax):
-        self.xmin = xmin
-        self.xmax = xmax
-        self.ymin = ymin
-        self.ymax = ymax        
-
-    @property
-    def x_c(self):
-        return (self.xmin + self.xmax) / 2.0
-    
-    @property
-    def y_c(self):
-        return (self.ymin + self.ymax) / 2.0
-
-    @property
-    def section_x(self):
-        # move in init?
-        return int(self.x_c / self.s_width)
-
-    @property
-    def section_y(self):
-        # move in init?
-        return int(self.y_c / self.s_height)
-
-    @property
-    def x_gt(self):
-        return (self.x_c - self.s_width * (self.section_x + 0.5)) / self.s_width
-
-    @property
-    def y_gt(self):
-        return (self.y_c - self.s_height * (self.section_y + 0.5)) / self.s_height
-
-    @property
-    def w_gt(self):
-        return (self.xmax - self.xmin)/self.s_width # gt - groung truth
-
-    @property
-    def h_gt(self):
-        return (self.ymax - self.ymin)/self.s_height
-    
-    
 
 
 def coord_loss(x, y, bbox: Bbox):
@@ -111,12 +58,12 @@ def confidence_loss(c, ious, responsible_bbox):
     return (c - ious[responsible_bbox]) ** 2
 
 
-def classification_loss(c, pred_vector):
-    class_to_index = {el:i for i, el in enumerate(OBJ_NAMS)}
+def classification_loss(c, pred_vector, name):
+    class_to_index = {el:i for i, el in enumerate(OBJ_NAMES)}
     pred_distribution = pred_vector[-config.C:]
 
     distribution_gt = torch.zeros(config.C)
-    distribution_gt[class_to_index[OBJ_NAMS[0]]] = 1
+    distribution_gt[class_to_index[name[0]]] = 1
     return nn.MSELoss()(distribution_gt, pred_distribution)
 
 
@@ -146,7 +93,7 @@ def yolo_loss(pred, names, bboxes):
         ious = []
         for b in range(config.B):
             pred_bbox = pred_vector[b * 5 : (b + 1) * 5]
-            ious.append(IoU(pred_bbox[:4], bbox))
+            ious.append(IoU(Bbox(*pred_bbox[:4]), bbox_gt))
 
         responsible_bbox = np.argmax(ious)
         x, y, w, h, c = pred_vector[responsible_bbox * 5 : (responsible_bbox + 1) * 5]
@@ -157,7 +104,7 @@ def yolo_loss(pred, names, bboxes):
         coord_loss_val += coord_loss(x, y, bbox_gt)
         perimeter_loss_val += perimeter_loss(w, h, bbox_gt)
         confidence_loss_val += confidence_loss(c, ious, responsible_bbox)
-        classification_loss_val += classification_loss(c, pred_vector)
+        classification_loss_val += classification_loss(c, pred_vector, name)
         noobj_loss_val += noobj_loss(ious, responsible_bbox, pred_vector)
 
     #  for empty boxes:

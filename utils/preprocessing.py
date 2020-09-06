@@ -19,7 +19,7 @@ def voc_to_yolo(image: Image.Image, annotation):
         ymin = int(int(obj["bndbox"]["ymin"]) * y_scale)
         ymax = int(int(obj["bndbox"]["ymax"]) * y_scale)
         names.append(obj["name"])
-        bboxes.append((xmin, xmax, ymin, ymax))
+        bboxes.append((xmin, ymin, xmax, ymax))
     return image, names, bboxes
 
 
