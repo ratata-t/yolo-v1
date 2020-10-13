@@ -11,11 +11,11 @@ class Yolo(nn.Module):
             self.backbone.fc = nn.Sequential()
         else:
             self.backbone = backbone
-        self.fc1 = nn.Linear(512, 4096)
-        self.fc2 = nn.Linear(4096, config.S * config.S * (config.B * 5 + config.C))
+        # self.fc1 = nn.Linear(512, 4096)
+        self.fc1 = nn.Linear(512, config.S * config.S * (config.B * 5 + config.C))
 
     def forward(self, inputs):
         backbone = self.backbone(inputs)
-        fc1 = self.fc1(backbone)
-        fc2 = self.fc2(fc1).view((config.S, config.S, config.B * 5 + config.C))
-        return fc2
+        # fc1 = self.fc1(backbone)
+        fc1 = self.fc1(backbone).view((config.S, config.S, config.B * 5 + config.C))
+        return nn.functional.relu(fc1)

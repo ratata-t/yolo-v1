@@ -47,10 +47,14 @@ def IoU(bbox1: Bbox, bbox2: Bbox):
 
 def coord_loss(x, y, bbox: Bbox):
     # Make ground truth [-0.5, 0.5] (relative to cell center)
+    # print(f'x:{x} bbox.x_gt:{bbox.x_gt}')
+    # print(f'y:{y} bbox.y_gt:{bbox.y_gt}')
     return (x - bbox.x_gt) ** 2 + (y - bbox.y_gt) ** 2
 
 
 def perimeter_loss(w, h, bbox:Bbox):
+    # print(f'w:{w} bbox.w_gt:{bbox.w_gt}')
+    # print(f'h:{h} bbox.h_gt:{bbox.h_gt}')
     return (w ** 0.5 - bbox.w_gt ** 0.5) ** 2 + (h ** 0.5 - bbox.h_gt ** 0.5) ** 2
 
 
@@ -97,8 +101,9 @@ def yolo_loss(pred, names, bboxes):
 
         responsible_bbox = np.argmax(ious)
         x, y, w, h, c = pred_vector[responsible_bbox * 5 : (responsible_bbox + 1) * 5]
-        w = torch.nn.functional.relu(w)
-        h = torch.nn.functional.relu(h)
+        # print(x, y, w, h, c)
+        # w = torch.nn.functional.relu(w)
+        # h = torch.nn.functional.relu(h)
 
         # Calculate loss for the responsible bbox
         coord_loss_val += coord_loss(x, y, bbox_gt)
@@ -106,6 +111,7 @@ def yolo_loss(pred, names, bboxes):
         confidence_loss_val += confidence_loss(c, ious, responsible_bbox)
         classification_loss_val += classification_loss(c, pred_vector, name)
         noobj_loss_val += noobj_loss(ious, responsible_bbox, pred_vector)
+        # print(coord_loss_val,'\n', perimeter_loss_val,'\n', confidence_loss_val,'\n', classification_loss_val,'\n', noobj_loss_val,'\n',)
 
     #  for empty boxes:
     loss = (

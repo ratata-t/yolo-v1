@@ -15,7 +15,8 @@ if __name__ == "__main__":
     elem = next(iter(dataloader))
     image, (name, bbox) = elem
     pred = model(image)
-    yolo_loss(pred, name, bbox)
+    loss = yolo_loss(pred, name, bbox)
+    print(loss)
 
     # image, (name, bbox) = voc_train[0]
     # image = image / 255.0
